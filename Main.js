@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const Settings = require('./BotSettings.js');
 const raid = require('./command/raid.js');
 const client = new Discord.Client();
 
@@ -56,4 +57,4 @@ client.on('message', message => {
     }
 });
 
-client.login('NjkwNDkwNzIzMzU4NzM2NDE0.XnSMCg.YaXicMIt9C5eT8jxHXzYp9MtwBE');
+client.login(Settings.token);

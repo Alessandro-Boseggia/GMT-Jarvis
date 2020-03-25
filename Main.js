@@ -1,60 +1,53 @@
-const Discord = require('discord.js');
-const Settings = require('./BotSettings.js');
-const raid = require('./command/raid.js');
-const client = new Discord.Client();
+const { Client, RichEmbed, Collection } = require('discord.js');
+const { config } = require('dotenv');
 
+const client = new Client({
+    disableEveryone: true
+});
+
+client.commands = new Collection();
+client.aliases = new Collection();
+
+["command"].forEach(handler => {
+    require(`./handler/${handler}`)(client);
+});
+
+config({
+    path: __dirname + '/.env'
+});
 
 client.once('ready', () => {
-	console.log('Ready!');
+    console.log('GMT-Jarvis now ready!');
+
+    client.user.setPresence({
+        status: 'online',
+        activity: {
+            name: 'gametales.it',
+            type: 'WATCHING',
+        },
+    });
 });
 
 
 client.on('message', message => {
+    const prefix = 'gmt$';
 
-    // if (!message.content.startsWith('!') || message.author.bot) return;
+    if (message.author.bot) return;
+    if (!message.guild) return;
+    if (!message.content.startsWith(prefix)) return;
+    // if (!message.member) message.member = await message.guild.fetchMember(message);
 
-    if (message.content.startsWith('!coso'))
-    {
-        message.channel.send('ciao').then(msg => {
-            console.log(msg.id);
-        });
-        
-        // console.log(message.channel.messages.);
+    const args = message.content.slice(prefix.length).trim().split(/ +/g);
+    const cmd = args.shift().toLowerCase();
 
-        // console.log(message.guild);
-        // console.log(message.member.roles.cache.some(role => role.name === 'Coso'));
-        // console.log(message.guild.ownerID);
-    }
-
-	if (message.content.startsWith('!raid') && message.channel.name === 'richiesta-raid')
-	{
-       raid.creaRaid(message);
-    }
-
-    if (message.content.startsWith('!parte') && message.channel.name === 'richiesta-raid')
-	{
-       raid.partecipa(message);
-    }
-    
-    if (message.content === '!clear')
-    {
-        message.channel.messages.fetch().then(msg => {
-            msg.forEach(m => {
-                m.delete();
-            });
-        });
-    }
-
-    if(message.content === '!test')
-    {
-        
-        message.channel.messages.fetch().then(msg => {
-            const coso = msg.find(key => key.id === '690853335808606209');
-            let raidMessage = coso.content;
-            raidMessage += '\n' + message.author.username + '\n';
-            coso.edit(raidMessage);
-        });
-    }
+    if (cmd.length === 0) return;
+    // recupero il comando
+    let command = client.commands.get(cmd);
+    // se non lo trovo, lo cerco tramite l'alias
+    if (!command) command = client.commands.get(client.aliases.get(cmd));
+    // se il comando esiste lo eseguo
+    if (command)
+        {command.run(client, message, args);}
 });
 
-client.login(Settings.token);
+client.login(process.env.TOKEN);
